@@ -243,9 +243,9 @@ int cpu_tcp_aes_crypto_ctr128_encrypt_output (connection_job_t C) /* {{{ */ {
     int len = c->out.total_bytes;
     if (c->flags & C_IS_TLS) {
       assert (c->left_tls_packet_length >= 0);
-      const int MAX_PACKET_LENGTH = 1425;
-      if (MAX_PACKET_LENGTH < len) {
-        len = MAX_PACKET_LENGTH;
+      int max_packet = 1024 + (rand() % (16384 - 1024 + 1));
+      if (max_packet < len) {
+        len = max_packet;
       }
 
       unsigned char header[5] = {0x17, 0x03, 0x03, len >> 8, len & 255};
