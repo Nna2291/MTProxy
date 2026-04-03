@@ -16,7 +16,6 @@ ExecStart=/opt/mtproxy/mtproto-proxy \
   -u nobody \
   -p 2398 \
   -H 443 \
-  -D mos.ru \
   -S ${PROXY_SECRET} \
   --aes-pwd /opt/mtproxy/proxy-secret \
   --http-stats \
