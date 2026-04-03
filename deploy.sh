@@ -12,6 +12,7 @@ git pull
 echo "=== Building ==="
 make clean
 make
+systemctl stop mtproxy.service
 
 echo "=== Updating binary ==="
 cp objs/bin/mtproto-proxy "$INSTALL_DIR/"
@@ -31,5 +32,7 @@ systemctl restart mtproxy.service
 
 echo "=== Status ==="
 systemctl status mtproxy.service --no-pager
-
+SECRET=$(grep PROXY_SECRET /opt/mtproxy/env | cut -d= -f2)
+IP=$(curl -s ifconfig.me)
+echo "tg://proxy?server=${IP}&port=443&secret=${SECRET}"
 echo "=== Done ==="
