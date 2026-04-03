@@ -1,0 +1,33 @@
+[Unit]
+Description=MTProxy Telegram Proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/mtproxy
+
+ExecStartPre=/bin/bash -c '\
+  curl -sfo /opt/mtproxy/proxy-secret https://core.telegram.org/getProxySecret && \
+  curl -sfo /opt/mtproxy/proxy-multi.conf https://core.telegram.org/getProxyConfig'
+
+ExecStart=/opt/mtproxy/mtproto-proxy \
+  -u nobody \
+  -p 2398 \
+  -H 443 \
+  -D google.com \
+  -S ${PROXY_SECRET} \
+  --aes-pwd /opt/mtproxy/proxy-secret \
+  /opt/mtproxy/proxy-multi.conf \
+  -M 1
+
+EnvironmentFile=/opt/mtproxy/env
+
+Restart=on-failure
+RestartSec=5
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Update MTProxy config files
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c '\
+  curl -sfo /opt/mtproxy/proxy-secret https://core.telegram.org/getProxySecret && \
+  curl -sfo /opt/mtproxy/proxy-multi.conf https://core.telegram.org/getProxyConfig && \
+  systemctl restart mtproxy.service'
