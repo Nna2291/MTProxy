@@ -34,3 +34,10 @@ void tcp_rpcs_set_ext_secret(unsigned char secret[16]);
 void tcp_rpc_add_proxy_domain (const char *domain);
 
 void tcp_rpc_init_proxy_domains();
+
+extern long long tls_accepted_connections;
+extern long long tls_failed_secret;
+extern long long tls_failed_replay;
+extern long long tls_failed_timestamp;
+extern long long tls_failed_parse;
+extern long long tls_proxy_fallbacks;

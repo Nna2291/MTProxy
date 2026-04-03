@@ -150,6 +150,13 @@ int tcp_rpcs_default_execute (connection_job_t c, int op, struct raw_message *ms
 static unsigned char ext_secret[16][16];
 static int ext_secret_cnt = 0;
 
+long long tls_accepted_connections;
+long long tls_failed_secret;
+long long tls_failed_replay;
+long long tls_failed_timestamp;
+long long tls_failed_parse;
+long long tls_proxy_fallbacks;
+
 void tcp_rpcs_set_ext_secret (unsigned char secret[16]) {
   assert (ext_secret_cnt < 16);
   memcpy (ext_secret[ext_secret_cnt ++], secret, 16);
@@ -937,6 +944,7 @@ static int is_allowed_timestamp (int timestamp) {
 }
 
 static int proxy_connection (connection_job_t C, const struct domain_info *info) {
+  tls_proxy_fallbacks++;
   struct connection_info *c = CONN_INFO(C);
   assert (check_conn_functions (&ct_proxy_pass, 0) >= 0);
 
@@ -1119,6 +1127,7 @@ int tcp_rpcs_compact_parse_execute (connection_job_t C) {
 
         const struct domain_info *info = get_sni_domain_info (client_hello, read_len);
         if (info == NULL) {
+          tls_failed_parse++;
           RETURN_TLS_ERROR(default_domain_info);
         }
 
@@ -1131,10 +1140,12 @@ int tcp_rpcs_compact_parse_execute (connection_job_t C) {
 
         if (len > min_len) {
           vkprintf (1, "Too much data in ClientHello, receive %d instead of %d\n", len, min_len);
+          tls_failed_parse++;
           RETURN_TLS_ERROR(info);
         }
         if (len != read_len) {
           vkprintf (1, "Too big ClientHello: receive %d bytes\n", len);
+          tls_failed_parse++;
           RETURN_TLS_ERROR(info);
         }
 
@@ -1144,6 +1155,7 @@ int tcp_rpcs_compact_parse_execute (connection_job_t C) {
 
         if (have_client_random (client_random)) {
           vkprintf (1, "Receive again request with the same client random\n");
+          tls_failed_replay++;
           RETURN_TLS_ERROR(info);
         }
         add_client_random (client_random);
@@ -1159,10 +1171,12 @@ int tcp_rpcs_compact_parse_execute (connection_job_t C) {
         }
         if (secret_id == ext_secret_cnt) {
           vkprintf (1, "Receive request with unmatched client random\n");
+          tls_failed_secret++;
           RETURN_TLS_ERROR(info);
         }
         int timestamp = *(int *)(expected_random + 28) ^ *(int *)(client_random + 28);
         if (!is_allowed_timestamp (timestamp)) {
+          tls_failed_timestamp++;
           RETURN_TLS_ERROR(info);
         }
 
@@ -1179,6 +1193,7 @@ int tcp_rpcs_compact_parse_execute (connection_job_t C) {
         }
         if (cipher_suites_length <= 1 || client_hello[pos] != 0x13 || client_hello[pos + 1] < 0x01 || client_hello[pos + 1] > 0x03) {
           vkprintf (1, "Can't find supported cipher suite\n");
+          tls_failed_parse++;
           RETURN_TLS_ERROR(info);
         }
         unsigned char cipher_suite_id = client_hello[pos + 1];
@@ -1186,6 +1201,7 @@ int tcp_rpcs_compact_parse_execute (connection_job_t C) {
         assert (rwm_skip_data (&c->in, len) == len);
         c->flags |= C_IS_TLS;
         c->left_tls_packet_length = -1;
+        tls_accepted_connections++;
 
         int encrypted_size = get_domain_server_hello_encrypted_size (info);
         int response_size = 127 + 6 + 5 + encrypted_size;

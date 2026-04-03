@@ -402,6 +402,13 @@ struct worker_stats {
 
   long long ext_connections, ext_connections_created;
   long long http_queries, http_bad_headers;
+
+  long long tls_accepted_connections;
+  long long tls_failed_secret;
+  long long tls_failed_replay;
+  long long tls_failed_timestamp;
+  long long tls_failed_parse;
+  long long tls_proxy_fallbacks;
 };
 
 struct worker_stats *WStats, SumStats;
@@ -454,6 +461,12 @@ static void update_local_stats_copy (struct worker_stats *S) {
   UPD (ext_connections_created); 
   UPD (http_queries); 
   UPD (http_bad_headers);
+  UPD (tls_accepted_connections);
+  UPD (tls_failed_secret);
+  UPD (tls_failed_replay);
+  UPD (tls_failed_timestamp);
+  UPD (tls_failed_parse);
+  UPD (tls_proxy_fallbacks);
 #undef UPD
   __sync_synchronize();
   S->cnt++;
@@ -527,6 +540,12 @@ static inline void add_stats (struct worker_stats *W) {
   UPD (ext_connections_created); 
   UPD (http_queries); 
   UPD (http_bad_headers);
+  UPD (tls_accepted_connections);
+  UPD (tls_failed_secret);
+  UPD (tls_failed_replay);
+  UPD (tls_failed_timestamp);
+  UPD (tls_failed_parse);
+  UPD (tls_proxy_fallbacks);
 #undef UPD
 }
 
@@ -711,6 +730,21 @@ void mtfront_prepare_stats (stats_buffer_t *sb) {
 	     safe_div (S(http_queries), uptime),
 	     proxy_mode,
 	     proxy_tag_set
+  );
+
+  sb_printf (sb,
+	     "tls_accepted_connections\t%lld\n"
+	     "tls_failed_secret\t%lld\n"
+	     "tls_failed_replay\t%lld\n"
+	     "tls_failed_timestamp\t%lld\n"
+	     "tls_failed_parse\t%lld\n"
+	     "tls_proxy_fallbacks\t%lld\n",
+	     S(tls_accepted_connections),
+	     S(tls_failed_secret),
+	     S(tls_failed_replay),
+	     S(tls_failed_timestamp),
+	     S(tls_failed_parse),
+	     S(tls_proxy_fallbacks)
   );
 #undef S
 #undef S1
