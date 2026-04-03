@@ -19,6 +19,7 @@ ExecStart=/opt/mtproxy/mtproto-proxy \
   -D google.com \
   -S ${PROXY_SECRET} \
   --aes-pwd /opt/mtproxy/proxy-secret \
+  --http-stats \
   /opt/mtproxy/proxy-multi.conf \
   -M 1
 
